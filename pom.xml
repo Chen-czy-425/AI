@@ -6,7 +6,7 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <!-- SpringBoot父工程 -->
+    <!-- SpringBoot父工程（统一管理版本） -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
@@ -21,32 +21,64 @@
 
     <properties>
         <java.version>1.8</java.version>
+        <!-- 统一管理非SpringBoot内置依赖的版本 -->
+        <okhttp.version>4.12.0</okhttp.version>
+        <jackson.version>2.15.2</jackson.version>
     </properties>
 
     <dependencies>
-
-        <!-- Web -->
+        <!-- 1. Spring Web核心（含MVC、内嵌Tomcat，无需重复引入） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- 测试 -->
+        <!-- 2. 测试依赖（仅测试环境生效） -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
+        <!-- 3. Lombok（简化实体类/日志代码） -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- 4. OkHttp（JDK8 适配的HTTP客户端，调用Ollama API必需） -->
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>${okhttp.version}</version>
+        </dependency>
+
+        <!-- 5. Jackson（JSON解析，处理Ollama响应必需） -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <!-- SpringBoot运行插件 -->
+            <!-- SpringBoot打包/运行插件 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <version>2.7.18</version>
+                <!-- 可选：打包时包含依赖（方便独立运行） -->
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>
