@@ -1,7 +1,10 @@
 package com.aiProject.service.impl;
 
+import com.aiProject.common.Result;
+import com.aiProject.config.OllamaConfig;
 import com.aiProject.dto.OllamaRequest;
 import com.aiProject.dto.OllamaResponse;
+import com.aiProject.dto.StreamMessageDTO;
 import com.aiProject.exception.OllamaInvokeException;
 import com.aiProject.service.OllamaService;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -9,6 +12,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 import okio.BufferedSource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -17,12 +22,12 @@ public class OllamaServiceImpl implements OllamaService {
 
     private final OkHttpClient client = new OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(5, TimeUnit.MINUTES)
+            .readTimeout(OllamaConfig.DEFAULT_STREAM_READ_TIMEOUT, TimeUnit.MINUTES)
             .build();
 
     private final ObjectMapper mapper = new ObjectMapper();
-    private static final String URL = "http://localhost:11434/api/generate";
-    private static final MediaType JSON = MediaType.get("application/json; charset=utf-8");
+    private static final String URL = OllamaConfig.OLLAMA_GENERATE_API;
+    private static final MediaType JSON = MediaType.get(OllamaConfig.MEDIA_TYPE_JSON);
 
     // ====================== 同步调用 ======================
     @Override
@@ -95,5 +100,50 @@ public class OllamaServiceImpl implements OllamaService {
         } catch (Exception e) {
             throw new OllamaInvokeException("流式调用异常", e);
         }
+    }
+
+    /**
+     * 创建流式对话
+     * @param request
+     * @return
+     */
+    @Override
+    public SseEmitter createStreamChat(OllamaRequest request) {
+        SseEmitter emitter = new SseEmitter(3 * 60 * 1000L);
+        final int[] index = {0};
+
+        new Thread(() -> {
+            try {
+                invokeStream(request, fragment -> {
+                    try {
+                        StreamMessageDTO msg = new StreamMessageDTO();
+                        msg.setContent(fragment);
+                        msg.setFinish(false);
+                        msg.setIndex(index[0]++);
+                        emitter.send(Result.success(msg));
+                    } catch (Exception e) {
+                        emitter.completeWithError(e);
+                        throw new RuntimeException("客户端断开");
+                    }
+                });
+                StreamMessageDTO end = new StreamMessageDTO();
+                end.setContent("");
+                end.setFinish(true);
+                end.setIndex(index[0]++);
+                emitter.send(Result.success(end));
+                emitter.complete();
+            } catch (Exception e) {
+                try {
+                    StreamMessageDTO errorMsg = new StreamMessageDTO();
+                    errorMsg.setContent("服务异常：" + e.getMessage());
+                    errorMsg.setFinish(true);
+                    emitter.send(Result.error(500, "流式调用失败", errorMsg));
+                } catch (Exception ex) {
+                    emitter.completeWithError(e);
+                }
+            }
+        }).start();
+
+        return emitter;
     }
 }
