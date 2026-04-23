@@ -1,15 +1,13 @@
 package com.aiProject.controller;
 
 import com.aiProject.common.Result;
+import com.aiProject.service.UserService;
+import com.aiProject.util.JwtUtil;
 import com.aiProject.dto.LoginDTO;
 import com.aiProject.util.CaptchaUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,6 +19,9 @@ import java.io.IOException;
 @Slf4j
 @CrossOrigin
 public class UserController {
+
+    @Autowired
+    private UserService userService;
 
     /**
      * 1. 生成验证码图片
@@ -49,24 +50,20 @@ public class UserController {
      */
     @PostMapping("/login")
     public Result<String> login(@RequestBody LoginDTO loginDTO, HttpServletRequest request) {
-        String username = loginDTO.getUsername();
-        String password = loginDTO.getPassword();
-        String code = loginDTO.getCode();
-
-        HttpSession session = request.getSession();
-        String correctCaptcha = (String) session.getAttribute("captcha");
-
-        // 1. 校验验证码
-        if (code == null || !code.equalsIgnoreCase(correctCaptcha)) {
-            return Result.error("验证码错误！");
+        try {
+            String token = userService.login(loginDTO.getUsername(), loginDTO.getPassword(), loginDTO.getCode());
+            return Result.success(token);
+        } catch (RuntimeException e) {
+            return Result.error(e.getMessage());
         }
+    }
 
-        // 2. 校验用户名密码
-        if ("admin".equals(username) && "123456".equals(password)) {
-            session.removeAttribute("captcha");
-            return Result.success("登录成功！");
+    @GetMapping("/refreshToken")
+    public Result<String> refreshToken(@RequestHeader("Authorization") String oldToken) {
+        String newToken = JwtUtil.refreshToken(oldToken);
+        if (newToken != null) {
+            return Result.success(newToken);
         }
-
-        return Result.error("用户名或密码错误！");
+        return Result.error("旧token无效，无法刷新，请重新登录！");
     }
 }

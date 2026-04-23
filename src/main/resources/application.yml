@@ -19,4 +19,5 @@ mybatis:
 # 日志
 logging:
   level:
-    com.ai.project: debug
+    com.aiProject: debug
+    com.aiProject.mapper: debug
