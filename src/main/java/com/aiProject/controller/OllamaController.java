@@ -2,7 +2,6 @@ package com.aiProject.controller;
 
 import com.aiProject.common.Result;
 import com.aiProject.dto.OllamaRequest;
-import com.aiProject.dto.StreamMessageDTO;
 import com.aiProject.exception.OllamaInvokeException;
 import com.aiProject.service.OllamaService;
 import lombok.extern.slf4j.Slf4j;
