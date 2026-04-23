@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 import okio.BufferedSource;
 import org.springframework.stereotype.Service;
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
