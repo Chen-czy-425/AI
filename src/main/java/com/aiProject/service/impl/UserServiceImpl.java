@@ -1,6 +1,5 @@
 package com.aiProject.service.impl;
 
-import com.aiProject.common.Result;
 import com.aiProject.entity.UserInfo;
 import com.aiProject.mapper.UserMapper;
 import com.aiProject.service.UserService;

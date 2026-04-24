@@ -1,10 +1,12 @@
 package com.aiProject.controller;
 
 import com.aiProject.common.Result;
+import com.aiProject.entity.UserInfo;
 import com.aiProject.service.UserService;
 import com.aiProject.util.JwtUtil;
 import com.aiProject.dto.LoginDTO;
 import com.aiProject.util.CaptchaUtil;
+import com.aiProject.util.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -56,6 +58,7 @@ public class UserController {
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
         }
+
     }
 
     @GetMapping("/refreshToken")
