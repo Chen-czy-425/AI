@@ -24,7 +24,7 @@ public class UserServiceImpl implements UserService {
         HttpSession session = request.getSession();
         String correctCaptcha = (String) session.getAttribute("captcha");
 
-        if (!"1111".equals(code) && (code == null || !code.equalsIgnoreCase(correctCaptcha))) {
+        if (code == null || !code.equalsIgnoreCase(correctCaptcha)) {
             throw new RuntimeException("验证码错误！");
         }
 
