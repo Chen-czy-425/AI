@@ -1,5 +1,6 @@
 package com.aiProject.service.impl;
 
+import com.aiProject.dto.LoginDTO;
 import com.aiProject.entity.UserInfo;
 import com.aiProject.mapper.UserMapper;
 import com.aiProject.service.UserService;
@@ -19,21 +20,20 @@ public class UserServiceImpl implements UserService {
     private UserMapper userMapper;
 
     @Override
-    public String login(String username, String password, String code) {
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    public String login(LoginDTO loginDTO, HttpServletRequest request) {
         HttpSession session = request.getSession();
         String correctCaptcha = (String) session.getAttribute("captcha");
 
-        if (code == null || !code.equalsIgnoreCase(correctCaptcha)) {
+        if (loginDTO.getCode() == null || !loginDTO.getCode() .equalsIgnoreCase(correctCaptcha)) {
             throw new RuntimeException("验证码错误！");
         }
 
-        UserInfo userInfo = userMapper.getByUsername(username);
+        UserInfo userInfo = userMapper.getByUsername(loginDTO.getUsername());
         if (userInfo == null) {
             throw new RuntimeException("用户不存在！");
         }
 
-        if (!userInfo.getPassword().equals(password)) {
+        if (!userInfo.getPassword().equals(loginDTO.getPassword())) {
             throw new RuntimeException("密码错误！");
         }
 

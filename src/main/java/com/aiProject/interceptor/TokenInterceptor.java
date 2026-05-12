@@ -39,7 +39,9 @@ public class TokenInterceptor implements HandlerInterceptor {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json;charset=utf-8");
             PrintWriter out = response.getWriter();
-            out.write(JSONObject.toJSONString(Result.error("token无效或已过期，请重新登录")));
+            out.write(JSONObject.toJSONString(
+                    Result.error(401, "token无效或已过期，请重新登录", null)
+            ));
             out.flush();
             out.close();
             return false;

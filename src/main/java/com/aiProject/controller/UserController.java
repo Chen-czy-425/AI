@@ -17,7 +17,10 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/user")
 @Slf4j
-@CrossOrigin
+@CrossOrigin(
+        origins = "http://localhost:5173",
+        allowCredentials = "true"
+)
 public class UserController {
 
     @Autowired
@@ -41,6 +44,7 @@ public class UserController {
         // 3. 生成验证码
         String verifyCode = CaptchaUtil.generateCaptcha(response.getOutputStream());
 
+        log.info("生成验证码 - 验证码: {}, SessionID: {}", verifyCode, session.getId());
         // 4. 存入 session
         session.setAttribute("captcha", verifyCode);
     }
@@ -51,7 +55,7 @@ public class UserController {
     @PostMapping("/login")
     public Result<String> login(@RequestBody LoginDTO loginDTO, HttpServletRequest request) {
         try {
-            String token = userService.login(loginDTO.getUsername(), loginDTO.getPassword(), loginDTO.getCode());
+            String token = userService.login(loginDTO,request);
             return Result.success(token);
         } catch (RuntimeException e) {
             return Result.error(e.getMessage());
@@ -60,11 +64,18 @@ public class UserController {
     }
 
     @GetMapping("/refreshToken")
-    public Result<String> refreshToken(@RequestHeader("Authorization") String oldToken) {
+    public Result<String> refreshToken(
+            @RequestHeader("Authorization") String authHeader
+    ) {
+
+        String oldToken = authHeader.replace("Bearer ", "");
+
         String newToken = JwtUtil.refreshToken(oldToken);
+
         if (newToken != null) {
             return Result.success(newToken);
         }
-        return Result.error("旧token无效，无法刷新，请重新登录！");
+
+        return Result.error(401, "旧token无效，无法刷新，请重新登录！", null);
     }
 }
